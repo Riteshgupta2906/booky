@@ -1,0 +1,21 @@
+{
+  "name": "Note to Self",
+  "short_name": "NoteToSelf",
+  "description": "Your personal TBR and library manager.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdfaf6",
+  "theme_color": "#fdfaf6",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
