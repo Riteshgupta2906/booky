@@ -8,13 +8,13 @@ const gaegu = Gaegu({
 });
 
 export const metadata = {
-  title: "Note to Self",
+  title: "bookypookie",
   description: "What's the next story?",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Note to Self",
+    title: "bookypookie",
   },
 };
 
