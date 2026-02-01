@@ -124,6 +124,28 @@ export default function Home() {
     };
   }, []);
 
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          setDeferredPrompt(null);
+        }
+      });
+    }
+  };
+
   return (
     <div className="h-screen relative overflow-hidden p-4 flex flex-col items-center">
       {/* Background Layers */}
@@ -170,6 +192,16 @@ export default function Home() {
         >
             <span className="[writing-mode:vertical-rl] rotate-180 text-lg md:text-xl tracking-widest leading-none">STATS</span>
         </button>
+        {deferredPrompt && (
+          <button
+              onClick={handleInstallClick}
+              className={`sketch-button py-6 w-10 md:w-12 rounded-r-xl rounded-l-none border-l-0 origin-left transition-all duration-300 font-bold flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 shadow-md -translate-x-1 opacity-90`}
+              style={{ fontFamily: 'var(--font-gaegu)' }}
+              onClickCapture={() => triggerHaptic(10)}
+          >
+              <span className="[writing-mode:vertical-rl] rotate-180 text-lg md:text-xl tracking-widest leading-none text-blue-600">INSTALL</span>
+          </button>
+        )}
       </div>
 
       {/* Right Action Button (Spin) - Only visible on Wheel tab */}

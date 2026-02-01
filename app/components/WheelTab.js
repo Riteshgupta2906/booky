@@ -80,6 +80,8 @@ export default function WheelTab({
     drawWheel();
   }, [drawWheel]);
 
+  const lastIndexRef = useRef(-1);
+
   const animateSpin = useCallback(() => {
     if (isSpinningRef.current) return;
     
@@ -101,6 +103,18 @@ export default function WheelTab({
       currentRotationRef.current = startRotation + (targetRotation - startRotation) * easeOut;
       drawWheel(currentRotationRef.current);
       
+      // Calculate current slice under pointer for haptic tick
+      const rotationDeg = (currentRotationRef.current * 180 / Math.PI) % 360;
+      const sliceDeg = 360 / books.length;
+      const currentIndex = Math.floor((270 - rotationDeg + 360) % 360 / sliceDeg);
+
+      if (currentIndex !== lastIndexRef.current) {
+        console.log("Haptic Tick", currentIndex);
+        // triggerHaptic(10); // Light tick
+        if (navigator.vibrate) navigator.vibrate(20); 
+        lastIndexRef.current = currentIndex;
+      }
+      
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
@@ -110,10 +124,7 @@ export default function WheelTab({
         triggerHaptic([50, 50, 50]);
         
         // Determine Winner
-        const rotationDeg = (currentRotationRef.current * 180 / Math.PI) % 360;
-        const sliceDeg = 360 / books.length;
-        let idx = Math.floor((270 - rotationDeg + 360) % 360 / sliceDeg);
-        onWin(books[idx]);
+        onWin(books[currentIndex]);
       }
     };
     
