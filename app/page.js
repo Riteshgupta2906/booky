@@ -34,6 +34,8 @@ export default function Home() {
 
 
   // Load from DB (with migration) on mount
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
       const loadData = async () => {
         try {
@@ -53,9 +55,6 @@ export default function Home() {
                 if (lsHistory) await set("tbr-history", JSON.parse(lsHistory));
                 
                 await set("migrated-from-ls", true);
-                
-                // Optional: Clear LS? Let's keep it as backup for now.
-                // localStorage.clear(); 
             }
 
             // Load from DB
@@ -71,36 +70,42 @@ export default function Home() {
 
         } catch (e) {
             console.error("Failed to load data from DB", e);
+        } finally {
+            setIsLoaded(true);
         }
       };
       
       loadData();
   }, []);
 
-  // Save to DB on changes
+  // Save to DB on changes - ONLY after initial load
   useEffect(() => {
+      if (!isLoaded) return;
       set("tbr-books", books);
-  }, [books]);
+  }, [books, isLoaded]);
 
   useEffect(() => {
+      if (!isLoaded) return;
       set("tbr-history", bookHistory);
-  }, [bookHistory]);
+  }, [bookHistory, isLoaded]);
 
   useEffect(() => {
+      if (!isLoaded) return;
       if (activeBook) {
         set("tbr-active-book", activeBook);
       } else {
         set("tbr-active-book", null);
       }
-  }, [activeBook]);
+  }, [activeBook, isLoaded]);
 
   useEffect(() => {
+      if (!isLoaded) return;
       if (activeTimestamp) {
         set("tbr-active-timestamp", activeTimestamp);
       } else {
         set("tbr-active-timestamp", null);
       }
-  }, [activeTimestamp]);
+  }, [activeTimestamp, isLoaded]);
 
   // Haptic feedback helper
   const triggerHaptic = (pattern) => {
@@ -145,6 +150,8 @@ export default function Home() {
       });
     }
   };
+
+  const [showActiveBookError, setShowActiveBookError] = useState(false);
 
   return (
     <div className="h-screen relative overflow-hidden p-4 flex flex-col items-center">
@@ -208,7 +215,15 @@ export default function Home() {
       {activeTab === "spin" && (
         <div className="fixed right-0 top-[55%] -translate-y-1/2 z-[60] pr-0 animate-in slide-in-from-right-4 duration-500">
             <button
-                onClick={() => setIsSpinning(true)}
+                onClick={() => {
+                   if (activeBook) {
+                       setShowActiveBookError(true);
+                       triggerHaptic([50, 50, 50]); // Aggressive haptic for error
+                       setTimeout(() => setShowActiveBookError(false), 3000);
+                       return;
+                   }
+                   setIsSpinning(true);
+                }}
                 disabled={isSpinning}
                 className="sketch-button py-8 w-12 md:w-16 rounded-l-xl rounded-r-none border-r-0 origin-right hover:scale-105 active:scale-95 transition-all font-bold flex flex-col items-center justify-center bg-[#FF6B6B] text-white shadow-lg border-[var(--ink)]"
                 style={{ fontFamily: 'var(--font-gaegu)' }}
@@ -218,6 +233,17 @@ export default function Home() {
                     {isSpinning ? "..." : "SPIN"}
                 </span>
             </button>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {showActiveBookError && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] animate-in fade-in zoom-in duration-300 pointer-events-none w-full max-w-md px-4 text-center">
+            <div className="bg-white text-[var(--ink)] px-6 py-4 rounded-xl shadow-[5px_5px_0px_rgba(0,0,0,0.2)] border-2 border-[var(--ink)] transform -rotate-2">
+                <p className="text-xl md:text-2xl font-bold" style={{fontFamily: 'var(--font-gaegu)'}}>
+                    ahh ahh pls pause or close the active book ☝️🤓
+                </p>
+            </div>
         </div>
       )}
 
