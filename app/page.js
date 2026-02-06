@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import WheelTab from "./components/WheelTab";
 import LibraryTab from "./components/LibraryTab";
 import StatsTab from "./components/StatsTab";
 import { get, set } from "./utils/db";
 
 export default function Home() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("spin");
   const [isSpinning, setIsSpinning] = useState(false);
 
@@ -171,6 +173,20 @@ export default function Home() {
               priority
             />
           </div>
+      </div>
+
+       {/* Top Right Surprise Button */}
+       <div className="fixed right-0 top-24 z-[60] pr-0">
+        <button
+            onClick={() => router.push('/valentine')}
+            className={`sketch-button py-4 w-10 md:w-12 rounded-l-xl rounded-r-none border-r-0 origin-right hover:scale-105 active:scale-95 transition-all duration-300 font-bold flex flex-col items-center justify-center bg-pink-100 hover:bg-pink-200 text-pink-600 shadow-md`}
+            style={{ fontFamily: 'var(--font-gaegu)' }}
+            onClickCapture={() => triggerHaptic(10)}
+        >
+            <span className="[writing-mode:vertical-rl] rotate-180 text-lg md:text-xl tracking-widest leading-none flex items-center gap-2 py-2">
+                SURPRISE 🎁
+            </span>
+        </button>
       </div>
      
       {/* Sidebar Buttons */}
