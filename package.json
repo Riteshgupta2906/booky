@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
     "@ducanh2912/next-pwa": "^10.2.9",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fireworks-js": "^2.10.8",
@@ -17,6 +20,8 @@
     "idb": "^8.0.3",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
+    "pg": "^8.18.0",
+    "prisma": "^7.4.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.4.0"

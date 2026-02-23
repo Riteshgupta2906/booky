@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef,useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FireworksOverlay from "../components/FireworksOverlay";
 import Image from "next/image";
@@ -26,21 +26,16 @@ const DOG_IMAGES = [
 ];
 
 // Floating hearts component
-// Floating hearts component
+const hearts = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    delay: Math.random() * 5,
+    duration: 8 + Math.random() * 4,
+    size: 20 + Math.random() * 30,
+    opacity: 0.3 + Math.random() * 0.4
+}));
+
 const FloatingHearts = () => {
-  const [hearts, setHearts] = useState([]);
-
-  useEffect(() => {
-    setHearts(Array.from({ length: 15 }, (_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      delay: Math.random() * 5,
-      duration: 8 + Math.random() * 4,
-      size: 20 + Math.random() * 30,
-      opacity: 0.3 + Math.random() * 0.4
-    })));
-  }, []);
-
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       {hearts.map((heart) => (
