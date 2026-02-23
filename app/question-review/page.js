@@ -275,13 +275,7 @@ function HeartButton({ count, onLike }) {
 }
 
 /* ─────────────────── CARD CONTENT ─────────────────── */
-function CardContent({
-  question,
-  onImageClick,
-  onLike,
-  onSwipeLeft,
-  onSwipeRight,
-}) {
+function CardContent({ question, onImageClick, onLike }) {
   console.log(question);
   const palette = hashBucket(question.bucketName);
   const codeBlocks = Array.isArray(question.codeJson) ? question.codeJson : [];
@@ -319,32 +313,6 @@ function CardContent({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSwipeLeft?.();
-            }}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-rose-400 font-bold text-sm"
-            style={{
-              background: "rgba(244,114,114,0.12)",
-              border: "1px solid rgba(244,114,114,0.22)",
-            }}
-          >
-            ←
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSwipeRight?.();
-            }}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-emerald-400 font-bold text-sm"
-            style={{
-              background: "rgba(52,211,153,0.12)",
-              border: "1px solid rgba(52,211,153,0.22)",
-            }}
-          >
-            →
-          </button>
           <HeartButton count={question.reviewCount} onLike={onLike} />
         </div>
       </div>
@@ -490,13 +458,11 @@ export default function QuestionReviewPage() {
   const [loading, setLoading] = useState(true);
   const [activeBucket, setActiveBucket] = useState("TODAY");
   const [exiting, setExiting] = useState(null);
-  const [dragX, setDragX] = useState(0);
   const [zoomedImage, setZoomedImage] = useState(null);
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ skip: 0, take: 10 });
   const [todayCompleted, setTodayCompletedState] = useState(false);
   const [buckets, setBuckets] = useState([]);
-
   const getTodayKey = () => {
     const today = new Date().toISOString().split("T")[0];
     return `today-questions-${today}`;
@@ -583,9 +549,11 @@ export default function QuestionReviewPage() {
           q.id === current.id ? { ...q, reviewCount: q.reviewCount + 1 } : q,
         ),
       );
-      fetch(`/api/question-review/${current.id}`, { method: "PATCH" }).catch(
-        () => {},
-      );
+      fetch(`/api/question-review/${current.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "increment" }),
+      }).catch(() => {});
     }
   }, [exiting, questions, index]);
 
@@ -619,28 +587,14 @@ export default function QuestionReviewPage() {
 
       setIndex((i) => i + 1);
       setExiting(null);
-      setDragX(0);
     }
-  }, [
-    exiting,
-    index,
-    questions.length,
-    activeBucket,
-    loading,
-    total,
-    fetchQuestions,
-    setTodayCompleted,
-  ]);
+  }, [exiting, index, questions.length, activeBucket, loading, total, fetchQuestions, setTodayCompleted]);
 
   const current = questions[index];
   const next = questions[index + 1];
   const isDone = !loading && index >= questions.length && questions.length > 0;
   const isEmpty = !loading && questions.length === 0;
   const todayDone = activeBucket === "TODAY" && todayCompleted;
-
-  // left drag → green (Got it), right drag → red (Skip)
-  const leftOpacity = Math.max(0, Math.min(1, -dragX / 110));
-  const rightOpacity = Math.max(0, Math.min(1, dragX / 110));
 
   return (
     <div
@@ -812,95 +766,52 @@ export default function QuestionReviewPage() {
               />
             )}
 
-            {/* Main draggable card */}
+            {/* Main card */}
             <motion.div
               key={index}
-              drag="x"
-              dragElastic={0.7}
-              dragMomentum={false}
-              onDrag={(_, info) => setDragX(info.offset.x)}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -60 || info.velocity.x < -500)
-                  handleSwipeLeft();
-                else if (info.offset.x > 60 || info.velocity.x > 500)
-                  handleSwipeRight();
-                else setDragX(0);
-              }}
               animate={
                 exiting === "left"
                   ? { x: "-115vw", rotate: -16, opacity: 0 }
                   : exiting === "right"
                     ? { x: "115vw", rotate: 16, opacity: 0 }
-                    : { x: dragX, rotate: dragX * 0.05, opacity: 1 }
+                    : { x: 0, opacity: 1 }
               }
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               onAnimationComplete={handleAnimationComplete}
-              className="absolute inset-x-2 bottom-2 top-2 rounded-xl cursor-grab active:cursor-grabbing overflow-hidden"
-              style={{ ...cardStyle, touchAction: "pan-y" }}
+              className="absolute inset-x-2 bottom-2 top-2 rounded-xl overflow-hidden"
+              style={cardStyle}
             >
-              {/* Got it overlay — left swipe — green */}
-              <div
-                className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center rounded-xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(16,185,129,0.62), rgba(52,211,153,0.42))",
-                  opacity: leftOpacity,
-                }}
-              >
-                <div
-                  className="flex flex-col items-center gap-2"
-                  style={{ transform: `scale(${0.72 + leftOpacity * 0.32})` }}
-                >
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white font-black"
-                    style={{
-                      background: "rgba(255,255,255,0.18)",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    ✓
-                  </div>
-                  <span className="text-white text-[11px] font-black tracking-widest uppercase">
-                    Got it!
-                  </span>
-                </div>
-              </div>
-
-              {/* Skip overlay — right swipe — red */}
-              <div
-                className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center rounded-xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(239,68,68,0.55), rgba(248,113,113,0.4))",
-                  opacity: rightOpacity,
-                }}
-              >
-                <div
-                  className="flex flex-col items-center gap-2"
-                  style={{ transform: `scale(${0.72 + rightOpacity * 0.32})` }}
-                >
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white font-black"
-                    style={{
-                      background: "rgba(255,255,255,0.18)",
-                      backdropFilter: "blur(8px)",
-                    }}
-                  >
-                    ✗
-                  </div>
-                  <span className="text-white text-[11px] font-black tracking-widest uppercase">
-                    Skip
-                  </span>
-                </div>
-              </div>
-
               <CardContent
                 question={current}
                 onImageClick={setZoomedImage}
                 onLike={handleLike}
-                onSwipeLeft={handleSwipeLeft}
-                onSwipeRight={handleSwipeRight}
               />
+
+              {/* Bottom action buttons */}
+              <div className="absolute bottom-4 inset-x-0 flex justify-between px-4 z-30 pointer-events-none">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleSwipeRight(); }}
+                  className="pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  <span className="text-[#6b7280] text-2xl">✗</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleSwipeLeft(); }}
+                  className="pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center active:scale-95 transition-transform"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  <span className="text-[#6b7280] text-2xl">✓</span>
+                </button>
+              </div>
             </motion.div>
           </>
         )}
